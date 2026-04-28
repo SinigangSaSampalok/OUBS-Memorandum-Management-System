@@ -1,0 +1,285 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+@import "./assets/layout-margins.css";
+
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-800;
+    font-family: "Poppins", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+@layer components {
+  .app-page-card,
+  .content-container {
+    width: min(1200px, calc(100% - 2rem));
+    margin: 50px auto;
+    border-radius: 0.5rem;
+    background: #ffffff;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18), 0 1px 2px rgba(15, 23, 42, 0.08);
+  }
+  .centered-page-container {
+    display: block !important;
+    max-width: 1200px !important;
+    width: calc(100% - 2rem) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 50px !important;
+    margin-bottom: 50px !important;
+  }
+
+  .app-section-title {
+    @apply text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-4;
+  }
+
+  .app-muted-text {
+    @apply text-sm sm:text-base text-slate-600 leading-relaxed;
+  }
+
+  .app-field-label {
+    @apply block text-sm font-semibold text-slate-700 mb-2;
+  }
+
+  .app-input,
+  .app-select,
+  .app-textarea {
+    @apply w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25;
+  }
+
+  .oubs-login-card .app-input,
+  .oubs-login-card .app-select,
+  .oubs-login-card .app-textarea {
+    @apply text-lg py-3.5;
+  }
+
+  .app-btn {
+    @apply inline-flex h-10 min-w-24 items-center justify-center gap-2 rounded-xl px-4 text-sm leading-none font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .oubs-login-card .app-btn,
+  .oubs-login-card .app-btn-primary,
+  .oubs-login-card .app-btn-secondary {
+    @apply h-14 text-lg;
+  }
+
+  .app-btn-primary {
+    @apply inline-flex h-10 min-w-24 items-center justify-center gap-2 rounded-xl px-4 text-sm leading-none font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed bg-emerald-700 text-white hover:bg-emerald-800;
+  }
+
+  .app-btn-secondary {
+    @apply inline-flex h-10 min-w-24 items-center justify-center gap-2 rounded-xl px-4 text-sm leading-none font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  .app-btn-cancel {
+    @apply border-red-300 bg-red-50 text-red-700 hover:bg-red-100;
+  }
+
+  .app-btn-solid-red {
+    @apply border-red-700 bg-red-700 text-white hover:bg-red-800;
+  }
+
+  .app-btn-solid-emerald {
+    @apply border-emerald-700 bg-emerald-700 text-white hover:bg-emerald-800;
+  }
+
+  .app-btn-danger {
+    @apply inline-flex h-10 min-w-24 items-center justify-center gap-2 rounded-xl px-4 text-sm leading-none font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed bg-red-700 text-white hover:bg-red-800;
+  }
+
+  .content-container button:not(.absolute):not(.underline):not([aria-label="Toggle sidebar"]) {
+    @apply inline-flex h-10 min-w-20 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .app-alert-error {
+    @apply rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700;
+  }
+
+  .app-alert-success {
+    @apply rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700;
+  }
+
+  .app-table {
+    @apply min-w-full text-sm;
+  }
+
+  .app-table thead tr {
+    @apply border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500;
+  }
+
+  .app-table th {
+    @apply px-5 py-4 text-center font-semibold border-r border-slate-300 first:pl-7 last:pr-7 last:border-r-0;
+  }
+
+  .app-table td {
+    @apply px-5 py-3 text-center border-r border-slate-200 last:border-r-0;
+  }
+
+  .app-table tbody tr {
+    @apply border-b border-slate-100 last:border-b-0;
+  }
+
+  .app-table-stable {
+    table-layout: fixed;
+  }
+
+  .app-cell-truncate {
+    @apply block w-full overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .app-cell-wrap {
+    @apply block whitespace-normal break-words leading-snug;
+  }
+
+  .app-doc-name-text {
+    @apply px-4 sm:px-5;
+  }
+
+  .app-doc-name-cell {
+    @apply pl-6 sm:pl-8;
+  }
+
+  .app-actions-cell {
+    @apply whitespace-nowrap;
+  }
+
+  .app-modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 p-4 sm:p-6;
+    animation: app-modal-fade-in 180ms ease-out;
+  }
+
+  .app-modal-dialog {
+    @apply w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl;
+    animation: app-modal-scale-in 200ms ease-out;
+  }
+
+  .app-modal-overlay-full {
+    padding: 0 !important;
+  }
+
+  .app-modal-fullscreen {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .app-modal-header {
+    @apply flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6;
+  }
+
+  .app-modal-body {
+    @apply px-5 py-5 sm:px-6;
+  }
+
+  .app-modal-footer {
+    @apply flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-6;
+  }
+
+  @keyframes app-modal-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes app-modal-scale-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .app-tabs {
+    @apply inline-flex items-center gap-1 rounded-xl border-2 border-slate-300 bg-slate-50 p-1;
+  }
+
+  .app-tab-btn {
+    @apply inline-flex h-11 min-w-28 items-center justify-center rounded-lg border-2 border-slate-400 px-10 text-sm font-semibold text-slate-600 transition hover:bg-white hover:text-slate-800;
+  }
+
+  .app-tab-btn-active {
+    @apply bg-emerald-700 text-white shadow-sm hover:bg-emerald-700 hover:text-white;
+  }
+
+  .app-tab-text {
+    display: inline-block;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .app-tabs .app-tab-btn {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  .app-content-inset {
+    @apply px-3 sm:px-4 md:px-6;
+  }
+
+  .app-section-space {
+    @apply mt-4;
+  }
+
+  .app-table-wrap {
+    @apply rounded-xl border border-slate-200 bg-white p-3 sm:p-4;
+  }
+
+  .app-refresh-mr {
+    margin-right: clamp(2.5rem, 4vw, 4rem) !important;
+  }
+
+  .app-header-inset {
+    @apply mx-8 sm:mx-10 md:mx-12;
+  }
+
+  .app-header-pad {
+    @apply pl-12 pr-12 sm:pl-14 sm:pr-14 md:pl-16 md:pr-16;
+  }
+
+  .app-workspace {
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    padding: clamp(0.85rem, 1.6vw, 1.35rem);
+    background:
+      radial-gradient(circle at 15% 0%, rgba(212, 160, 23, 0.16) 0%, transparent 35%),
+      linear-gradient(140deg, #1b5e20 0%, #17491c 44%, #0d3715 100%);
+  }
+
+  .app-workspace-panel {
+    @apply border overflow-hidden;
+    border-radius: 0.85rem;
+    border-color: rgba(212, 160, 23, 0.55);
+    background: rgba(247, 238, 211, 0.93);
+    box-shadow: inset 0 0 0 1px rgba(212, 160, 23, 0.22);
+  }
+
+  .app-table-readable {
+    @apply text-base;
+  }
+
+  .app-table-readable thead tr {
+    @apply text-sm;
+  }
+
+  .app-table-readable th {
+    @apply py-5;
+  }
+
+  .app-table-readable td {
+    @apply py-4;
+  }
+
+  .app-workspace .app-table-wrap {
+    border-color: rgba(212, 160, 23, 0.38);
+    background: rgba(252, 246, 228, 0.9);
+  }
+}
+
