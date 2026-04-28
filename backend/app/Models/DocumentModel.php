@@ -17,7 +17,8 @@ class DocumentModel extends Model
         'file_name', 'file_size', 'file_type', 'recipient_type', 
         'allow_replies', 'reply_available_days', 'download_available_days', 'reply_deadline_at',
         'download_deadline_at', 'uploaded_by', 'status',
-        'review_status', 'reviewed_by', 'reviewed_at', 'review_note'
+        'review_status', 'reviewed_by', 'reviewed_at', 'review_note',
+        'archived', 'archived_at', 'archived_by'
     ];
 
     protected $useTimestamps = true;
@@ -47,16 +48,6 @@ class DocumentModel extends Model
     ];
     protected $skipValidation = false;
     protected $cleanValidationRules = true;
-
-    /**
-     * Get documents by recipient type
-     */
-    public function getByRecipientType($recipientType)
-    {
-        return $this->where('recipient_type', $recipientType)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
-    }
 
     /**
      * Get documents by uploader
@@ -112,5 +103,63 @@ class DocumentModel extends Model
     public function updateStatus($id, $status)
     {
         return $this->update($id, ['status' => $status]);
+    }
+
+    /**
+     * Archive a document
+     */
+    public function archive($id, $userId)
+    {
+        return $this->update($id, [
+            'archived' => 1,
+            'archived_at' => date('Y-m-d H:i:s'),
+            'archived_by' => $userId
+        ]);
+    }
+
+    /**
+     * Restore a document from archive
+     */
+    public function restore($id)
+    {
+        return $this->update($id, [
+            'archived' => 0,
+            'archived_at' => null,
+            'archived_by' => null
+        ]);
+    }
+
+    /**
+     * Get archived documents by recipient type
+     */
+    public function getArchivedByRecipientType($recipientType)
+    {
+        return $this->where('recipient_type', $recipientType)
+                    ->where('archived', 1)
+                    ->orderBy('archived_at', 'DESC')
+                    ->findAll();
+    }
+
+    /**
+     * Get all archived documents
+     */
+    public function getAllArchived()
+    {
+        return $this->select('documents.*, users.full_name as uploaded_by_name')
+                    ->join('users', 'users.id = documents.uploaded_by')
+                    ->where('documents.archived', 1)
+                    ->orderBy('documents.archived_at', 'DESC')
+                    ->findAll();
+    }
+
+    /**
+     * Get documents by recipient type (excluding archived)
+     */
+    public function getByRecipientType($recipientType)
+    {
+        return $this->where('recipient_type', $recipientType)
+                    ->where('archived', 0)
+                    ->orderBy('created_at', 'DESC')
+                    ->findAll();
     }
 }

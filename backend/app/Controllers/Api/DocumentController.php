@@ -366,6 +366,84 @@ class DocumentController extends BaseController
         return $this->respond(['error' => 'Failed to delete document'], 500);
     }
 
+    public function archive($id)
+    {
+        // Only OUBS can archive documents
+        if ($this->request->user['user_type'] !== 'oubs') {
+            return $this->respond(['error' => 'Access denied'], 403);
+        }
+
+        $document = $this->documentModel->find($id);
+        
+        if (!$document) {
+            return $this->respond(['error' => 'Document not found'], 404);
+        }
+
+        if ($this->documentModel->archive($id, $this->request->user['user_id'])) {
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Document archived successfully'
+            ]);
+        }
+
+        return $this->respond(['error' => 'Failed to archive document'], 500);
+    }
+
+    public function restore($id)
+    {
+        // Only OUBS can restore documents
+        if ($this->request->user['user_type'] !== 'oubs') {
+            return $this->respond(['error' => 'Access denied'], 403);
+        }
+
+        $document = $this->documentModel->find($id);
+        
+        if (!$document) {
+            return $this->respond(['error' => 'Document not found'], 404);
+        }
+
+        if ($this->documentModel->restore($id)) {
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Document restored successfully'
+            ]);
+        }
+
+        return $this->respond(['error' => 'Failed to restore document'], 500);
+    }
+
+    public function archivedDocuments()
+    {
+        // Only OUBS can view archived documents
+        if ($this->request->user['user_type'] !== 'oubs') {
+            return $this->respond(['error' => 'Access denied'], 403);
+        }
+
+        $documents = $this->documentModel->getAllArchived();
+        $documents = $this->reconcileCompletedStatuses($documents);
+
+        return $this->respond([
+            'status' => 'success',
+            'data' => $documents
+        ]);
+    }
+
+    public function archivedByRecipientType($type)
+    {
+        // Only OUBS can view archived documents
+        if ($this->request->user['user_type'] !== 'oubs') {
+            return $this->respond(['error' => 'Access denied'], 403);
+        }
+
+        $documents = $this->documentModel->getArchivedByRecipientType($type);
+        $documents = $this->reconcileCompletedStatuses($documents);
+
+        return $this->respond([
+            'status' => 'success',
+            'data' => $documents
+        ]);
+    }
+
     public function myDocuments()
     {
         $user = $this->request->user;

@@ -2,8 +2,8 @@
   <section class="manager-screen">
     <header class="manager-hero">
       <p class="hero-kicker">OUBS PORTAL</p>
-      <h1>Document Manager</h1>
-      <p class="hero-subtitle">Review, download, and manage uploaded memorandums.</p>
+      <h1>Archived Documents</h1>
+      <p class="hero-subtitle">View and restore archived memorandums.</p>
     </header>
 
     <article class="manager-card">
@@ -58,7 +58,7 @@
       </div>
 
       <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
-      <div v-if="isLoading" class="loading-text">Loading documents...</div>
+      <div v-if="isLoading" class="loading-text">Loading archived documents...</div>
 
       <div v-else class="table-wrap">
         <table>
@@ -66,14 +66,14 @@
             <tr>
               <th>Document Name</th>
               <th>Document No.</th>
-              <th>Deadline</th>
+              <th>Archived Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="filteredDocuments.length === 0">
               <td colspan="4" class="empty-cell">
-                {{ documents.length === 0 ? 'No documents found. Upload a PDF to get started.' : 'No documents match your search or filter.' }}
+                {{ documents.length === 0 ? 'No archived documents found.' : 'No documents match your search or filter.' }}
               </td>
             </tr>
 
@@ -92,7 +92,7 @@
                 </div>
               </td>
               <td class="mono">{{ doc.document_number }}</td>
-              <td class="mono">{{ formatDeadline(doc.reply_deadline_at) }}</td>
+              <td class="mono">{{ formatArchivedDate(doc.archived_at) }}</td>
               <td class="actions-cell">
                 <div class="actions">
                   <button
@@ -131,16 +131,17 @@
                   </button>
                   <button
                     type="button"
-                    class="btn btn-secondary btn-small"
+                    class="btn btn-primary btn-small"
                     :disabled="actionLoadingId === doc.id"
-                    @click="archiveDocument(doc)"
+                    @click="restoreDocument(doc)"
                   >
                     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M21 8v13H3V8"></path>
-                      <path d="M1 3h22v5H1z"></path>
-                      <path d="M10 12h4"></path>
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                      <path d="M21 3v5h-5"></path>
+                      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                      <path d="M8 16H3v5"></path>
                     </svg>
-                    Archive
+                    Restore
                   </button>
                 </div>
               </td>
@@ -230,7 +231,7 @@ const filteredDocuments = computed(() => {
 
     // Month filter
     if (selectedMonth.value) {
-      const docDate = doc.created_at || doc.updated_at;
+      const docDate = doc.archived_at || doc.created_at;
       if (docDate) {
         const docMonth = docDate.substring(0, 7); // YYYY-MM format
         if (docMonth !== selectedMonth.value) {
@@ -257,22 +258,23 @@ const statusPillClass = (status) => {
 };
 
 const isViewOnly = (doc) => Number(doc?.allow_replies ?? 1) === 0 || doc?.is_view_only === true;
-const formatDeadline = (deadline) => {
-  if (!deadline) return '-';
-  const normalized = String(deadline).replace(' ', 'T');
-  const date = new Date(`${normalized}Z`);
-  if (Number.isNaN(date.getTime())) return String(deadline);
-  return date.toLocaleDateString();
+
+const formatArchivedDate = (date) => {
+  if (!date) return '-';
+  const normalized = String(date).replace(' ', 'T');
+  const d = new Date(`${normalized}Z`);
+  if (Number.isNaN(d.getTime())) return String(date);
+  return d.toLocaleDateString();
 };
 
 const fetchDocuments = async () => {
   errorMessage.value = '';
   isLoading.value = true;
   try {
-    const response = await documentService.byRecipientType(activeTab.value);
+    const response = await documentService.archivedByRecipientType(activeTab.value);
     documents.value = response?.data || [];
   } catch (error) {
-    errorMessage.value = error?.message || 'Failed to load documents.';
+    errorMessage.value = error?.message || 'Failed to load archived documents.';
     await showError(errorMessage.value, 'Load Failed');
   } finally {
     isLoading.value = false;
@@ -361,47 +363,24 @@ const downloadDocument = async (doc) => {
   }
 };
 
-const deleteDocument = async (doc) => {
+const restoreDocument = async (doc) => {
   if (!doc?.id) return;
   const confirmed = await showConfirm({
-    title: 'Delete Document',
-    message: `Delete "${doc.title}"? This action cannot be undone.`,
-    confirmText: 'Delete',
-    cancelText: 'Keep',
-  });
-  if (!confirmed) return;
-
-  actionLoadingId.value = doc.id;
-  try {
-    await documentService.delete(doc.id);
-    documents.value = documents.value.filter((item) => item.id !== doc.id);
-    await showSuccess('Document deleted successfully.', 'Deleted');
-  } catch (error) {
-    errorMessage.value = error?.message || 'Failed to delete document.';
-    await showError(errorMessage.value, 'Delete Failed');
-  } finally {
-    actionLoadingId.value = null;
-  }
-};
-
-const archiveDocument = async (doc) => {
-  if (!doc?.id) return;
-  const confirmed = await showConfirm({
-    title: 'Archive Document',
-    message: `Archive "${doc.title}"? The document will be moved to the archive.`,
-    confirmText: 'Archive',
+    title: 'Restore Document',
+    message: `Restore "${doc.title}" from archive? The document will be moved back to the active documents.`,
+    confirmText: 'Restore',
     cancelText: 'Cancel',
   });
   if (!confirmed) return;
 
   actionLoadingId.value = doc.id;
   try {
-    await documentService.archive(doc.id);
+    await documentService.restore(doc.id);
     documents.value = documents.value.filter((item) => item.id !== doc.id);
-    await showSuccess('Document archived successfully.', 'Archived');
+    await showSuccess('Document restored successfully.', 'Restored');
   } catch (error) {
-    errorMessage.value = error?.message || 'Failed to archive document.';
-    await showError(errorMessage.value, 'Archive Failed');
+    errorMessage.value = error?.message || 'Failed to restore document.';
+    await showError(errorMessage.value, 'Restore Failed');
   } finally {
     actionLoadingId.value = null;
   }
@@ -472,156 +451,219 @@ onMounted(fetchDocuments);
 }
 
 .tab-btn {
-  border: 1px solid rgba(240, 192, 79, 0.55);
-  border-radius: 0.6rem;
-  padding: 0.55rem 0.9rem;
-  background: rgba(0, 0, 0, 0.18);
-  color: #fff8e7;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.72rem;
-  transition: filter 120ms ease, transform 120ms ease, background 120ms ease;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f6ead0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(212, 160, 23, 0.4);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .tab-btn:hover {
-  filter: brightness(1.06);
+  background: rgba(212, 160, 23, 0.2);
 }
 
 .tab-btn-active {
-  background: rgba(240, 192, 79, 0.2);
-  border-color: rgba(240, 192, 79, 0.9);
+  background: rgba(212, 160, 23, 0.35);
+  border-color: #d4a017;
+  color: #fff;
 }
 
 .refresh-btn {
-  border: 1px solid #f0c04f;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f6ead0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(212, 160, 23, 0.4);
   border-radius: 0.5rem;
-  padding: 0.45rem 0.9rem;
-  color: #fff8e5;
-  background: linear-gradient(to bottom right, #6f1717, #4a0f0f);
-  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: rgba(212, 160, 23, 0.2);
 }
 
 .refresh-btn:disabled {
-  opacity: 0.65;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
+.filter-section {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f1d488;
+  margin-bottom: 0.35rem;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #a68a5b;
+  pointer-events: none;
+}
+
+.search-input,
+.month-input {
+  width: 100%;
+  padding: 0.6rem 0.7rem 0.6rem 2.3rem;
+  font-size: 0.9rem;
+  color: #fff8e7;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(212, 160, 23, 0.4);
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search-input::placeholder {
+  color: #b8a88a;
+}
+
+.search-input:focus,
+.month-input:focus {
+  border-color: #d4a017;
+}
+
+.month-input {
+  padding-left: 0.7rem;
+}
+
 .error-text {
-  margin-top: 0.65rem;
-  color: #ffd2d2;
+  margin-top: 0.8rem;
+  padding: 0.7rem;
+  font-size: 0.9rem;
+  color: #ffcccc;
+  background: rgba(255, 0, 0, 0.15);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  border-radius: 0.5rem;
 }
 
 .loading-text {
-  margin-top: 0.65rem;
-  color: #f6ead0;
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #f1d488;
+  font-size: 1rem;
 }
 
 .table-wrap {
-  margin-top: 0.75rem;
+  margin-top: 1rem;
   overflow-x: auto;
-  border: 1px solid rgba(240, 192, 79, 0.3);
-  border-radius: 0.6rem;
-  background: linear-gradient(180deg, rgba(27, 94, 32, 0.4) 0%, rgba(13, 55, 21, 0.3) 100%);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 0.9rem;
 }
 
-th,
-td {
-  border-bottom: 1px solid rgba(240, 192, 79, 0.2);
-  padding: 0.75rem 0.65rem;
-  text-align: center;
-  font-size: 0.95rem;
-  vertical-align: top;
+thead tr {
+  background: rgba(212, 160, 23, 0.15);
 }
 
 th {
-  color: #f3ce74;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-weight: 800;
-  white-space: nowrap;
-  font-size: 0.82rem;
+  padding: 0.75rem 0.6rem;
+  text-align: left;
+  font-weight: 700;
+  color: #f1d488;
+  border-bottom: 2px solid rgba(212, 160, 23, 0.4);
 }
 
-tbody tr:last-child td {
-  border-bottom: 0;
+td {
+  padding: 0.75rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .empty-cell {
-  padding: 1.1rem 0.85rem;
-  color: #f6ead0;
   text-align: center;
+  color: #b8a88a;
+  padding: 2rem 0.6rem;
 }
 
 .doc-cell {
-  text-align: left;
-  min-width: 260px;
+  max-width: 280px;
 }
 
 .doc-title {
-  font-weight: 800;
+  font-weight: 600;
   color: #fff8e7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .doc-meta {
-  margin-top: 0.45rem;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
   flex-wrap: wrap;
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  padding: 0.2rem 0.55rem;
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
   font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 0, 0, 0.18);
-  color: #f6ead0;
+  font-weight: 600;
+  color: #1b5e20;
+  background: rgba(212, 160, 23, 0.4);
+  border-radius: 0.25rem;
 }
 
 .pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  padding: 0.2rem 0.55rem;
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
   font-size: 0.7rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: 600;
+  border-radius: 1rem;
 }
 
 .pill-allowed {
-  border-color: rgba(140, 255, 196, 0.45);
-  background: rgba(0, 90, 36, 0.22);
-  color: #d7ffe7;
+  color: #1b5e20;
+  background: rgba(76, 175, 80, 0.3);
 }
 
 .pill-not-allowed {
-  border-color: rgba(255, 156, 156, 0.5);
-  background: rgba(120, 0, 0, 0.24);
-  color: #ffd2d2;
+  color: #b71c1c;
+  background: rgba(244, 67, 54, 0.3);
 }
 
 .pill-pending {
-  border-color: rgba(240, 192, 79, 0.55);
-  background: rgba(240, 192, 79, 0.12);
-  color: #f6ead0;
+  color: #f1d488;
+  background: rgba(255, 193, 7, 0.25);
 }
 
 .mono {
-  white-space: nowrap;
-  color: #fff7e2;
+  font-family: 'Courier New', Courier, monospace;
+  color: #e0d5c0;
 }
 
 .actions-cell {
@@ -630,138 +672,126 @@ tbody tr:last-child td {
 
 .actions {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  flex-wrap: nowrap;
-}
-
-.btn {
-  border: 1px solid #f0c04f;
-  border-radius: 0.6rem;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #fff8e5;
-  background: rgba(0, 0, 0, 0.22);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  transition: filter 120ms ease, opacity 120ms ease;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  filter: brightness(1.06);
-}
-
-.btn-danger {
-  border-color: rgba(255, 156, 156, 0.7);
-  background: linear-gradient(to bottom right, #6f1717, #4a0f0f);
-}
-
-.btn-danger:hover:not(:disabled) {
-  filter: brightness(1.08);
-}
-
-.btn-small {
-  font-size: 0.78rem;
-  padding: 0.4rem 0.6rem;
-}
-
-.icon {
-  width: 12px;
-  height: 12px;
-}
-
-.filter-section {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  padding: 0.75rem 0;
-  margin-bottom: 0.75rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
-@media (max-width: 768px) {
-  .filter-section {
-    grid-template-columns: 1fr;
-  }
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.filter-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #f3ce74;
-  font-weight: 700;
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.search-input-wrapper {
-  position: relative;
+.btn-secondary {
+  color: #1b5e20;
+  background: rgba(212, 160, 23, 0.35);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(212, 160, 23, 0.5);
+}
+
+.btn-primary {
+  color: #fff;
+  background: #1b5e20;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2e7d32;
+}
+
+.btn-danger {
+  color: #fff;
+  background: #c62828;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #d32f2f;
+}
+
+.btn-small {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+/* Modal styles */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
 }
 
-.search-icon {
-  position: absolute;
-  left: 0.75rem;
-  width: 18px;
-  height: 18px;
-  color: rgba(212, 160, 23, 0.6);
-  pointer-events: none;
+.app-modal-overlay-full {
+  padding: 0;
 }
 
-.search-input {
+.app-modal-dialog {
+  background: #fff;
+  border-radius: 0.75rem;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.app-modal-fullscreen {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 0.6rem;
-  padding: 0.65rem 0.9rem 0.65rem 2.5rem;
-  background: rgba(0, 0, 0, 0.18);
-  color: #fff8e7;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  border-radius: 0;
 }
 
-.search-input::placeholder {
-  color: rgba(246, 234, 208, 0.6);
+.app-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.search-input:focus {
-  border-color: rgba(240, 192, 79, 0.95);
-  box-shadow: 0 0 0 3px rgba(240, 192, 79, 0.2);
+.app-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.month-input {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 0.6rem;
-  padding: 0.65rem 0.9rem;
-  background: rgba(0, 0, 0, 0.18);
-  color: #fff8e7;
-  font-size: 0.95rem;
-  outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
-  min-width: 180px;
+.app-btn-solid-red {
+  color: #fff;
+  background: #c62828;
 }
 
-.month-input:focus {
-  border-color: rgba(240, 192, 79, 0.95);
-  box-shadow: 0 0 0 3px rgba(240, 192, 79, 0.2);
-}
-
-.month-input::placeholder {
-  color: rgba(246, 234, 208, 0.6);
+.app-btn-solid-red:hover {
+  background: #d32f2f;
 }
 </style>
-

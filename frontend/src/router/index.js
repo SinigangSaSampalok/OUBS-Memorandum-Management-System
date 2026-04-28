@@ -13,6 +13,7 @@ import RecipientSelector from '@/components/landing/RecipientSelector.vue';
 import OubsLogin from '@/components/oubs/OubsLogin.vue';
 import OubsHome from '@/components/oubs/OubsHome.vue';
 import DocumentManager from '@/components/oubs/DocumentManager.vue';
+import ArchivedDocuments from '@/components/oubs/ArchivedDocuments.vue';
 import UploadDocument from '@/components/oubs/UploadDocument.vue';
 import SummaryView from '@/components/oubs/SummaryView.vue';
 import UserList from '@/components/oubs/UserList.vue';
@@ -52,6 +53,11 @@ const routes = [
         path: 'documents',
         name: 'OubsDocuments',
         component: DocumentManager
+      },
+      {
+        path: 'archived',
+        name: 'ArchivedDocuments',
+        component: ArchivedDocuments
       },
       {
         path: 'upload',

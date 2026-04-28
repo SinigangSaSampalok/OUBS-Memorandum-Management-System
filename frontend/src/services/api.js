@@ -242,6 +242,10 @@ export const documentService = {
   download: (id, params = null) => api.get(`/documents/download/${id}`, { responseType: 'blob', params }),
   myDocuments: () => api.get('/documents/my-documents'),
   byRecipientType: (type) => api.get(`/documents/recipient-type/${type}`),
+  archive: (id) => api.post(`/documents/archive/${id}`),
+  restore: (id) => api.post(`/documents/restore/${id}`),
+  archivedDocuments: () => api.get('/documents/archived'),
+  archivedByRecipientType: (type) => api.get(`/documents/archived/recipient-type/${type}`),
 };
 
 // Reply slip services

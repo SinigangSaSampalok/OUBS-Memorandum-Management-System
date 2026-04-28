@@ -55,6 +55,10 @@ $routes->group('api', function($routes) {
         $routes->get('documents/download/(:num)', 'Api\DocumentController::download/$1');
         $routes->get('documents/my-documents', 'Api\DocumentController::myDocuments');
         $routes->get('documents/recipient-type/(:any)', 'Api\DocumentController::byRecipientType/$1');
+        $routes->post('documents/archive/(:num)', 'Api\DocumentController::archive/$1', ['filter' => 'csrf']);
+        $routes->post('documents/restore/(:num)', 'Api\DocumentController::restore/$1', ['filter' => 'csrf']);
+        $routes->get('documents/archived', 'Api\DocumentController::archivedDocuments');
+        $routes->get('documents/archived/recipient-type/(:any)', 'Api\DocumentController::archivedByRecipientType/$1');
 
         // Document Review (BOR Reviewer)
         $routes->get('document-reviews', 'Api\DocumentReviewController::index');
